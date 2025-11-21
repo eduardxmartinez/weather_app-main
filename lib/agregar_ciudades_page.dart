@@ -72,7 +72,7 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                     setState(() {
                       ciudadData = resultados;
                     });
-                    debugPrint(ciudadData.toString());
+                    //debugPrint(ciudadData.toString());
                   }
                 },
               ),
@@ -102,6 +102,10 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                 ),
               ),
               SizedBox(height: 20),
+              Text(
+                "Ciudades Guardadas",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               //aqui va la lista
               SizedBox(
                 height: 200,
@@ -125,6 +129,17 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                         return ListTile(
                           title: Text(ciudad['nombre'].toString()),
                           subtitle: Text('Lat: ${ciudad["latitud"]} Lon: ${ciudad["longitud"]}'),
+                          selected: selectedIndex == index,
+                      onTap:() {
+                        setState(() {
+                          selectedIndex = index;
+                          debugPrint(ciudad.toString());
+                          _cityController.text = ciudad['nombre'];
+                          selectedLat = ciudad['latitud'];
+                          selectedLon = ciudad['longitud'];
+                          _mapController.move(LatLng(selectedLat, selectedLon), 10);
+                        });
+                      }
 
                         );
                       },
