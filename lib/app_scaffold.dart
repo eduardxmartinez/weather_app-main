@@ -62,7 +62,7 @@ class AppScaffold extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.location_city),
+              leading: const Icon(Icons.contacts),
               title: const Text('Créditos'),
               onTap: () {
                 context.go('/creditos');
