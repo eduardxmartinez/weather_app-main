@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app/creditos_page.dart';
 import 'app_scaffold.dart';
 import 'theme_provider.dart';
 import 'agregar_ciudades_page.dart';
@@ -33,6 +34,7 @@ class _MyAppState extends State<MyApp> {
     final GoRouter router = GoRouter(routes:  [
       GoRoute(path: '/', builder: (context, state) => const MyHomePage(title:'Inicio')),
       GoRoute(path: '/agregar_ciudades', builder: (context, state) => AgregarCiudadesPage()),
+      GoRoute(path: '/creditos', builder: (context, state) => CreditosPage()),
       
     ]);
     return MaterialApp.router( title: 'Weather App',

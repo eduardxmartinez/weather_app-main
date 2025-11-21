@@ -61,6 +61,13 @@ class AppScaffold extends StatelessWidget {
                 context.go('/agregar_ciudades');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.location_city),
+              title: const Text('Créditos'),
+              onTap: () {
+                context.go('/creditos');
+              },
+            ),
             const Divider(),
           ],
         ),
