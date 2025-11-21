@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app/configuracion_page.dart';
 import 'package:weather_app/creditos_page.dart';
 import 'app_scaffold.dart';
 import 'theme_provider.dart';
@@ -54,6 +55,10 @@ class _MyAppState extends State<MyApp> {
                 state.extra as Map<String, dynamic>? ?? <String, dynamic>{};
             return DetalleClimaPage(ciudad: ciudad);
           },
+        ),
+        GoRoute(
+          path: '/configuracion',
+          builder: (context, state) => const ConfiguracionPage(),
         ),
       ],
     );

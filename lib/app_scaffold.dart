@@ -2,17 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-
 class AppScaffold extends StatelessWidget {
   final String title;
   final Widget body;
 
-  const AppScaffold({
-    super.key,
-    required this.title,
-    required this.body,
-  });
+  const AppScaffold({super.key, required this.title, required this.body});
 
   static Future<String?> _getCustomText() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,24 +22,25 @@ class AppScaffold extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-             DrawerHeader(
+            DrawerHeader(
               decoration: BoxDecoration(color: Colors.blue),
               child: FutureBuilder<String?>(
                 future: _getCustomText(),
-              builder: (context, snapshot) {
-                final drawerText = snapshot.data ?? 'Menú';
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    
-                    SizedBox(height: 8),
-                    Text(drawerText, style: TextStyle(color: Colors.white, fontSize: 18)),
-                    SizedBox(height: 8),
-                    
-                  ],
-                );
-              },
-            ),
+                builder: (context, snapshot) {
+                  final drawerText = snapshot.data ?? 'Menú';
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 8),
+                      Text(
+                        drawerText,
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                      SizedBox(height: 8),
+                    ],
+                  );
+                },
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.sunny),
@@ -63,12 +58,19 @@ class AppScaffold extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.contacts),
+              title: const Text('Configuración'),
+              onTap: () {
+                context.go('/configuracion');
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.contacts),
               title: const Text('Créditos'),
               onTap: () {
                 context.go('/creditos');
               },
             ),
-            const Divider(),
           ],
         ),
       ),
