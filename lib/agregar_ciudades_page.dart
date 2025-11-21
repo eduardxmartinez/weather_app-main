@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,10 +264,11 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                                         );
                                       });
                                       _showMapSheet(
-                                        nombre: nombreCiudad,
+                                        ciudad: ciudadInfo,
                                         lat: selectedLat,
                                         lon: selectedLon,
                                         isSaved: false,
+                                        isSearching: true,
                                       );
                                     },
                             ),
@@ -382,7 +384,7 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                             setState(() {
                               selectedIndex = index;
                               _selectedFromSaved = true; //
-                              _cityController.text = ciudad['nombre'];
+
                               selectedLat = ciudad['latitud'];
                               selectedLon = ciudad['longitud'];
                               _mapController.move(
@@ -391,7 +393,7 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                               );
                             });
                             _showMapSheet(
-                              nombre: ciudad['nombre'],
+                              ciudad: ciudad,
                               lat: selectedLat,
                               lon: selectedLon,
                               isSaved: true,
@@ -465,9 +467,12 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                           child: GestureDetector(
                             onTap: () {
                               _showMapSheet(
-                                nombre: _cityController.text.trim().isEmpty
+                                ciudad: _selectedFromSaved
                                     ? null
-                                    : _cityController.text.trim(),
+                                    : (selectedIndex != null &&
+                                              selectedIndex! < ciudadData.length
+                                          ? ciudadData[selectedIndex!]
+                                          : null),
                                 lat: selectedLat,
                                 lon: selectedLon,
                                 isSaved: _selectedFromSaved,
@@ -500,10 +505,12 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
   // ---Bottom sheet interactivo con mapa ---
 
   void _showMapSheet({
+    Map<String, dynamic>? ciudad,
     String? nombre,
     required double lat,
     required double lon,
     required bool isSaved,
+    bool isSearching = false,
     int? savedIndex,
   }) {
     if (!mounted) return;
@@ -515,9 +522,26 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (context) {
-        final titulo = (nombre == null || nombre.trim().isEmpty)
-            ? 'Ubicación seleccionada'
-            : nombre.trim();
+        final ciudadNormalizada = <String, dynamic>{
+          ...(ciudad ?? <String, dynamic>{}),
+          'latitud': lat,
+          'longitud': lon,
+        };
+
+        // prioridad: nombre param > ciudad['nombre'] > ciudad['display_name']
+        final titulo = (nombre != null && nombre.trim().isNotEmpty)
+            ? nombre.trim()
+            : (ciudadNormalizada['nombre']?.toString().trim().isNotEmpty == true
+                  ? ciudadNormalizada['nombre'].toString().trim()
+                  : (ciudadNormalizada['display_name']
+                                ?.toString()
+                                .trim()
+                                .isNotEmpty ==
+                            true
+                        ? ciudadNormalizada['display_name'].toString().trim()
+                        : 'Ubicación seleccionada'));
+
+        ciudadNormalizada['nombre'] = titulo;
 
         return SafeArea(
           child: Padding(
@@ -603,12 +627,15 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.cloud_outlined),
                     label: const Text('Ver clima de esta ciudad'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      //  Aquí conectas tu navegación o refresco
-                      // Ej: widget.actualizaClima? Get.to(...)
-                      // Por ahora solo cerramos.
-                    },
+                    onPressed: isSearching
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            context.push(
+                              '/detalle_clima',
+                              extra: ciudadNormalizada,
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue.shade700,
                       shape: RoundedRectangleBorder(

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:weather_icons/weather_icons.dart';
 import 'package:intl/intl.dart';
 
@@ -206,9 +207,9 @@ class _ClimaCarouselViewState extends State<ClimaCarouselView> {
                 );
               },
               child: GestureDetector(
-                onTap: () => widget.actualizaClima(
-                  ciudad,
-                ), //  tap abre detalle (lo manejas en actualizaClima)
+                onTap: () {
+                  context.push('/detalle_clima', extra: ciudad);
+                },
                 child: _buildCiudadCard(ciudad),
               ),
             );
