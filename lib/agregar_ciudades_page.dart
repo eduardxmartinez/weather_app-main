@@ -37,11 +37,19 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
   double selectedLat = 29.0948207;
   double selectedLon = -110.9692202;
   int? selectedIndex;
+  bool _selectedFromSaved = false;
   Future<List<Map<String, dynamic>>> ciudadesGuardadas =
       Future<List<Map<String, dynamic>>>.value([]);
 
   bool _isSearching = false; //  spinner buscar
   bool _isAddingCity = false; //  spinner agregar
+
+  bool _yaEstaGuardada(String nombre, List<Map<String, dynamic>> guardadas) {
+    final n = nombre.trim().toLowerCase();
+    return guardadas.any(
+      (c) => (c['nombre'] ?? '').toString().trim().toLowerCase() == n,
+    );
+  }
 
   @override
   void initState() {
@@ -160,42 +168,111 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
               _sectionTitle("Resultados"),
               SizedBox(
                 height: 220,
-                child: ListView.separated(
-                  itemCount: ciudadData.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 6),
-                  itemBuilder: (context, index) {
-                    final ciudadInfo = ciudadData[index];
-                    final isSelected = selectedIndex == index;
-                    return Card(
-                      elevation: isSelected ? 1.2 : 0.3,
-                      color: isSelected ? Colors.blue.withOpacity(0.08) : null,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ListTile(
-                        leading: const Icon(Icons.location_city),
-                        title: Text(
-                          ciudadInfo['display_name'],
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          'Lat: ${ciudadInfo['lat']}, Lon: ${ciudadInfo['lon']}',
-                        ),
-                        selected: isSelected,
-                        onTap: () {
-                          setState(() {
-                            selectedIndex = index;
-                            _cityController.text = ciudadInfo['display_name'];
-                            selectedLat = double.parse(ciudadInfo['lat']);
-                            selectedLon = double.parse(ciudadInfo['lon']);
-                            _mapController.move(
-                              LatLng(selectedLat, selectedLon),
-                              10,
-                            );
-                          });
-                        },
-                      ),
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: ciudadesGuardadas,
+                  builder: (context, snapGuardadas) {
+                    final guardadas =
+                        snapGuardadas.data ?? const <Map<String, dynamic>>[];
+
+                    return ListView.separated(
+                      itemCount: ciudadData.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
+                      itemBuilder: (context, index) {
+                        final ciudadInfo = ciudadData[index];
+                        final nombreCiudad = (ciudadInfo['display_name'] ?? '')
+                            .toString();
+                        final isSelected = selectedIndex == index;
+                        final isSavedAlready = _yaEstaGuardada(
+                          nombreCiudad,
+                          guardadas,
+                        ); //
+
+                        return Opacity(
+                          opacity: isSavedAlready ? 0.55 : 1.0, //  apagada
+                          child: Card(
+                            elevation: isSelected ? 1.2 : 0.3,
+                            color: isSelected
+                                ? Colors.blue.withOpacity(0.08)
+                                : (isSavedAlready
+                                      ? Colors.grey.withOpacity(0.05)
+                                      : null),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              enabled: !isSavedAlready, //  no permite tap
+                              leading: Icon(
+                                Icons.location_city,
+                                color: isSavedAlready ? Colors.grey : null,
+                              ),
+                              title: Text(
+                                nombreCiudad,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                'Lat: ${ciudadInfo['lat']}, Lon: ${ciudadInfo['lon']}',
+                              ),
+                              selected: isSelected,
+                              trailing: isSavedAlready
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle,
+                                            size: 16,
+                                            color: Colors.green,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'Guardada',
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : null,
+                              onTap: isSavedAlready
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        selectedIndex = index;
+                                        _selectedFromSaved = false; //
+                                        _cityController.text = nombreCiudad;
+                                        selectedLat = double.parse(
+                                          ciudadInfo['lat'],
+                                        );
+                                        selectedLon = double.parse(
+                                          ciudadInfo['lon'],
+                                        );
+                                        _mapController.move(
+                                          LatLng(selectedLat, selectedLon),
+                                          10,
+                                        );
+                                      });
+                                      _showMapSheet(
+                                        nombre: nombreCiudad,
+                                        lat: selectedLat,
+                                        lon: selectedLon,
+                                        isSaved: false,
+                                      );
+                                    },
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -281,6 +358,7 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                     itemBuilder: (context, index) {
                       final ciudad = data[index];
                       final isSelected = selectedIndex == index;
+
                       return Card(
                         elevation: isSelected ? 1.2 : 0.3,
                         shape: RoundedRectangleBorder(
@@ -303,6 +381,7 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                           onTap: () {
                             setState(() {
                               selectedIndex = index;
+                              _selectedFromSaved = true; //
                               _cityController.text = ciudad['nombre'];
                               selectedLat = ciudad['latitud'];
                               selectedLon = ciudad['longitud'];
@@ -311,6 +390,13 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                                 10,
                               );
                             });
+                            _showMapSheet(
+                              nombre: ciudad['nombre'],
+                              lat: selectedLat,
+                              lon: selectedLon,
+                              isSaved: true,
+                              savedIndex: index,
+                            );
                           },
                         ),
                       );
@@ -349,8 +435,18 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                       setState(() {
                         selectedLat = point.latitude;
                         selectedLon = point.longitude;
+                        selectedIndex = null;
+                        _selectedFromSaved = false;
                       });
                       _mapController.move(point, _mapController.camera.zoom);
+                      _showMapSheet(
+                        nombre: _cityController.text.trim().isEmpty
+                            ? null
+                            : _cityController.text.trim(),
+                        lat: selectedLat,
+                        lon: selectedLon,
+                        isSaved: false,
+                      );
                     },
                   ),
                   children: [
@@ -366,10 +462,25 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
                           point: LatLng(selectedLat, selectedLon),
                           width: 40,
                           height: 40,
-                          child: const Icon(
-                            Icons.location_pin,
-                            color: Colors.red,
-                            size: 36,
+                          child: GestureDetector(
+                            onTap: () {
+                              _showMapSheet(
+                                nombre: _cityController.text.trim().isEmpty
+                                    ? null
+                                    : _cityController.text.trim(),
+                                lat: selectedLat,
+                                lon: selectedLon,
+                                isSaved: _selectedFromSaved,
+                                savedIndex: _selectedFromSaved
+                                    ? selectedIndex
+                                    : null,
+                              );
+                            },
+                            child: const Icon(
+                              Icons.location_pin,
+                              color: Colors.red,
+                              size: 36,
+                            ),
                           ),
                         ),
                       ],
@@ -382,6 +493,149 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
             const SizedBox(height: 22),
           ],
         ),
+      ),
+    );
+  }
+
+  // ---Bottom sheet interactivo con mapa ---
+
+  void _showMapSheet({
+    String? nombre,
+    required double lat,
+    required double lon,
+    required bool isSaved,
+    int? savedIndex,
+  }) {
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        final titulo = (nombre == null || nombre.trim().isEmpty)
+            ? 'Ubicación seleccionada'
+            : nombre.trim();
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                //  Handle
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                _sheetRow(Icons.my_location, 'Lat: ${lat.toStringAsFixed(5)}'),
+                _sheetRow(Icons.my_location, 'Lon: ${lon.toStringAsFixed(5)}'),
+
+                const SizedBox(height: 12),
+
+                //  Acciones
+                if (!isSaved) ...[
+                  SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add_location_alt),
+                      label: const Text('Agregar esta ciudad'),
+                      onPressed: _isAddingCity
+                          ? null
+                          : () {
+                              Navigator.pop(context);
+                              _agregarCiudad(titulo, lat, lon);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  SizedBox(
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      label: const Text('Quitar de guardadas'),
+                      onPressed: savedIndex == null
+                          ? null
+                          : () {
+                              Navigator.pop(context);
+                              _eliminarCiudad(savedIndex);
+                            },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 8),
+
+                SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.cloud_outlined),
+                    label: const Text('Ver clima de esta ciudad'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      //  Aquí conectas tu navegación o refresco
+                      // Ej: widget.actualizaClima? Get.to(...)
+                      // Por ahora solo cerramos.
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sheetRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey.shade700),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: TextStyle(color: Colors.grey.shade800)),
+          ),
+        ],
       ),
     );
   }
