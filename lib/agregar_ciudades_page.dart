@@ -27,7 +27,7 @@ class _AgregarCiudadesPageState extends State<AgregarCiudadesPage> {
       style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
+        color: Colors.white,
       ),
     ),
   ); //  títulos consistentes
